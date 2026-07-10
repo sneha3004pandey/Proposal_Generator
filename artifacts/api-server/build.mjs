@@ -102,6 +102,7 @@ async function buildAll() {
       "electron",
       "pdfkit",
       "fontkit",
+      "connect-pg-simple",
     ],
     sourcemap: "linked",
     plugins: [

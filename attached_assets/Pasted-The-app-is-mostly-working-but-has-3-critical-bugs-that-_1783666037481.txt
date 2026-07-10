@@ -1,0 +1,27 @@
+The app is mostly working but has 3 critical bugs that must be fixed right now. Do not explain your plan first — debug, fix, run, and verify each item before stopping.
+
+## BUG 1: "Error saving" on the Review Proposal page
+The Review screen shows a red "Error saving" message next to the "Save Progress" button. Find the exact cause (check server logs/console for the failing request — likely a broken save/autosave route, a session/data-store write failure, or a mismatched field being sent from the Review page). Fix it so Save Progress succeeds silently with a success confirmation (or no error) instead of "Error saving." Test by opening Review, clicking Save Progress, and confirming no error appears and the data is actually persisted (reload the page and confirm the saved data is still there).
+
+## BUG 2: DOCX (Word) generation is not working
+Clicking Download Word / Generate Word does not produce a valid document. Debug the DOCX generation route/function end-to-end:
+- Confirm the DOCX library is properly installed and imported.
+- Confirm all proposal data (Proposal Details, Document Control tables, Project Summary, Scope of Work, Pre-Requisites, Out of Scope, Commercials table, Corporate Profile, Orient's Strengths, Acceptance tables) is actually being passed into the document builder.
+- Fix any errors thrown during generation (check server logs).
+- Confirm the route correctly sends back a valid .docx file with the correct content-type/headers so the browser downloads it properly.
+Test by actually generating a DOCX from a real filled-in proposal and confirming the file is non-empty, opens correctly, is genuinely editable, and contains all the entered data.
+
+## BUG 3: Word to PDF conversion is not working
+After DOCX generation is fixed, fix PDF generation (Generate PDF). Debug why the PDF is not being produced:
+- Confirm the PDF generation method/library is installed correctly and working in this Replit environment (if it depends on the DOCX step, make sure it runs after DOCX generation succeeds, or generate the PDF independently from the same proposal data — whichever is more reliable).
+- Fix any errors thrown during PDF generation (check server logs).
+- Confirm the route returns a valid PDF with correct content-type/headers, that it can be previewed inline in the browser, and downloaded.
+Test by actually generating a PDF from a real filled-in proposal and confirming the file is non-empty, valid, opens correctly, previews in-browser, and contains all sections and data correctly.
+
+## FINAL VERIFICATION BEFORE STOPPING
+1. Fill a complete test proposal (all sections) as a real user would.
+2. Go to Review → click Save Progress → confirm no error, data persists on reload.
+3. Generate Word → confirm real, valid, editable .docx downloads with all data.
+4. Generate PDF → confirm real, valid PDF is generated, previewable, and downloadable with all data.
+5. Fix any remaining runtime errors found during this test.
+6. Do not stop until all three bugs are confirmed fixed with an actual successful end-to-end test — not just code changes.
