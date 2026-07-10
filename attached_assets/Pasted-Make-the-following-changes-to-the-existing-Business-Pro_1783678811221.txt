@@ -1,0 +1,40 @@
+Make the following changes to the existing Business Proposal Generator app. Do not rebuild the app from scratch — modify only what's needed for these specific changes. Do not change auth, dashboard, DOCX/PDF generation setup, or any section not mentioned below beyond what's required to support these changes. Build, run, fix errors, and verify each item before stopping.
+
+## 1. Rich Text Editor for these 4 sections:
+- Project Summary
+- Scope of Work
+- Pre-Requisites
+- Out of Scope
+
+Replace the plain textarea in each with a simple, lightweight rich text editor (use a minimal, Replit-friendly library like Quill or TipTap — pick whichever is easiest to integrate reliably; avoid heavy/complex editors). Each of these 4 editors must support:
+- Bold, Italic
+- Text color
+- Font family selection (a small dropdown of a few standard fonts, e.g. Arial, Times New Roman, Calibri, Georgia)
+- Insert Table (basic rows/columns, user can add/edit cell content)
+- Insert Image (upload an image and embed it inline in the content)
+
+Store each of these fields as rich content (HTML or the editor's native JSON format — whichever is simpler to reliably convert later). This formatting (bold/italic/color/font/tables/images) must correctly carry through and render in: Review screen, HTML Preview, DOCX export, and PDF export. Do not lose or flatten the formatting when generating DOCX/PDF — actually convert the rich content into real formatted Word/PDF content (real bold, real italic, real colors, real tables, real embedded images), not plain text.
+
+## 2. Pre-Requisites section
+Currently this section shows fixed, non-editable text. Change it so:
+- The existing fixed text still appears there by default (pre-filled, not blank).
+- But now the user CAN edit it using the same rich text editor described above (bold/italic/color/font/table/image), same as Scope of Work and Out of Scope.
+- Whatever the user changes it to must flow into Review, Preview, DOCX, and PDF.
+
+## 3. Commercials section
+- The "Standard Commercial Notes" text shown below the Commercials table must become editable (use the same rich text editor: bold/italic/color/font/table/image), pre-filled with the existing fixed notes text by default, editable by the user, and this edited version must flow into Review, Preview, DOCX, and PDF.
+- Add a "Total" row at the bottom of the Commercials table. This row must automatically calculate and display the sum of the "Total Cost (In INR)" column across all commercial rows, and update live as rows are added/edited/deleted. This calculated Total row must also appear correctly in Review, Preview, DOCX, and PDF.
+
+## 4. Corporate Profile & Orient's Strengths sections
+Change these two sections from editable to NON-editable. The fixed default text must still be displayed exactly as it currently is, but remove the ability for the user to edit it (no textarea/rich text input — just display the fixed content as read-only text). This must still appear correctly in Review, Preview, DOCX, and PDF exactly as the fixed content.
+
+## 5. Acceptance & Authorization section
+Remove the "9.1 [Customer Name]" sub-section and its table entirely. Keep only "9.2 Orient Technologies Ltd" and its table (Name, Designation, Signature, Date). Renumber/relabel this remaining part appropriately (e.g. it can just become "9. Acceptance and Authorization" followed directly by the Orient Technologies Ltd table, without a 9.1/9.2 split, or keep it as "9.1 Orient Technologies Ltd" — whichever requires the smaller change). Make sure this section is correctly removed/updated everywhere: form, Review, Preview, DOCX, and PDF.
+
+## FINAL VERIFICATION
+1. Confirm all 4 rich text fields (Project Summary, Scope of Work, Pre-Requisites, Out of Scope) support bold, italic, color, font selection, table insert, and image insert, and this renders correctly in Review, Preview, DOCX, and PDF.
+2. Confirm Pre-Requisites and Out of Scope are editable with the fixed/default text pre-filled.
+3. Confirm Commercial Notes are editable and pre-filled, and the new Total row correctly sums the Total Cost column and appears in Review, Preview, DOCX, and PDF.
+4. Confirm Corporate Profile and Orient's Strengths now display as fixed, non-editable text (no input controls) but still show correctly everywhere.
+5. Confirm the Acceptance section no longer shows the 9.1 Customer table and only shows the Orient Technologies Ltd table, correctly in form, Review, Preview, DOCX, and PDF.
+6. Fix any runtime errors found during this testing before stopping.

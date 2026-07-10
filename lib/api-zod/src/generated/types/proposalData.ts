@@ -15,12 +15,20 @@ export interface ProposalData {
   customerName: string;
   documentProperties: DocPropertyRow[];
   versionHistory: VersionHistoryRow[];
+  /** Rich HTML content */
   projectSummary: string;
+  /** Rich HTML content */
   scopeOfWork: string;
+  /** Rich HTML content */
+  preRequisites: string;
+  /** Rich HTML content */
   outOfScope: string;
   commercialRows: CommercialRow[];
+  /** Rich HTML content */
+  commercialNotes: string;
+  /** Fixed, read-only plain text */
   corporateProfile: string;
+  /** Fixed, read-only plain text */
   orientStrengths: string;
-  customerAcceptance: AcceptanceParty;
   orientAcceptance: AcceptanceParty;
 }

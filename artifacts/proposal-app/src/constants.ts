@@ -73,4 +73,25 @@ export const COMMERCIAL_NOTES_TEXT = `• Prices mentioned are exclusive of all 
 • All payments should be released in favor of "Orient Technologies Ltd."
 • AMC includes only lights-on services. Any changes or modifications will be made post Customer approval of the change request hours and be billed as per actuals.`;
 
+// Rich-text (HTML) default content used to pre-fill the editable rich text
+// editors for Pre-Requisites and Standard Commercial Notes.
+export const DEFAULT_PRE_REQUISITES_HTML = `<ul>
+<li>User Credential with valid accesses &amp; licenses for the developer</li>
+<li>Access to the infra/gateway/environments/templates/apps/reports/active directory</li>
+<li>SharePoint folder structure will be fixed before the start of the project and will be changed only via the backend</li>
+<li>Questionnaire for metadata will be fixed before the start of the project</li>
+<li>Approvers for each folder will be assigned in approver master by admin</li>
+<li>User master &amp; role assignment will be managed by admin</li>
+<li>All users who will access the app will need either Microsoft E1/E3/E5/PowerApps license.</li>
+<li>Customer will provide all the necessary information and allow Orient team to access the system for development &amp; maintenance of the project</li>
+</ul>`;
+
+export const DEFAULT_COMMERCIAL_NOTES_HTML = `<ul>
+<li>Prices mentioned are exclusive of all government taxes.</li>
+<li>Payment terms would be 100% in advance.</li>
+<li>Customer shall release the payment within 30 days of the invoice submission.</li>
+<li>All payments should be released in favor of "Orient Technologies Ltd."</li>
+<li>AMC includes only lights-on services. Any changes or modifications will be made post Customer approval of the change request hours and be billed as per actuals.</li>
+</ul>`;
+
 export const CONFIDENTIAL_TEXT_TEMPLATE = `Orient will take utmost precautions to ensure that sensitive data like business strategies, data, protected website/app locations, access rights, and confidential documents are managed appropriately. No information related to the project will be exposed to competitors or the public without prior consent of {CUSTOMER_NAME} and Orient Technologies Ltd. (OTL)`;

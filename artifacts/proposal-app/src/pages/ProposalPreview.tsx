@@ -4,12 +4,16 @@ import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft, Download, FileText, Printer } from 'lucide-react';
-import { 
-  PRE_REQUISITES_TEXT,
-  COMMERCIAL_NOTES_TEXT,
-  CONFIDENTIAL_TEXT_TEMPLATE
-} from '@/constants';
+import { CONFIDENTIAL_TEXT_TEMPLATE } from '@/constants';
 import { format } from 'date-fns';
+
+function formatCurrency(rows: { totalCost: string }[]): string {
+  const total = rows.reduce((sum, row) => {
+    const numeric = parseFloat((row.totalCost || '').replace(/[^0-9.-]/g, ''));
+    return sum + (isNaN(numeric) ? 0 : numeric);
+  }, 0);
+  return total.toLocaleString('en-IN');
+}
 
 export default function ProposalPreview() {
   const [, params] = useRoute('/proposals/:id/preview');
@@ -174,16 +178,12 @@ export default function ProposalPreview() {
           <div className="w-full max-w-[210mm] min-h-[297mm] bg-white shadow-md p-16 flex flex-col gap-10">
             <div>
               <h2 className="text-2xl font-bold text-primary border-b-2 border-primary pb-2 mb-6">2. Project Summary</h2>
-              <div className="whitespace-pre-wrap leading-relaxed text-gray-800">
-                {data.projectSummary}
-              </div>
+              <div className="prose leading-relaxed text-gray-800 max-w-none" dangerouslySetInnerHTML={{ __html: data.projectSummary }} />
             </div>
 
             <div>
               <h2 className="text-2xl font-bold text-primary border-b-2 border-primary pb-2 mb-6">3. Scope of Work</h2>
-              <div className="whitespace-pre-wrap leading-relaxed text-gray-800">
-                {data.scopeOfWork}
-              </div>
+              <div className="prose leading-relaxed text-gray-800 max-w-none" dangerouslySetInnerHTML={{ __html: data.scopeOfWork }} />
             </div>
           </div>
 
@@ -191,16 +191,12 @@ export default function ProposalPreview() {
           <div className="w-full max-w-[210mm] min-h-[297mm] bg-white shadow-md p-16 flex flex-col gap-10">
             <div>
               <h2 className="text-2xl font-bold text-primary border-b-2 border-primary pb-2 mb-6">4. Pre-Requisites</h2>
-              <div className="whitespace-pre-wrap leading-relaxed text-gray-800 bg-gray-50 p-6 rounded-md">
-                {PRE_REQUISITES_TEXT}
-              </div>
+              <div className="prose leading-relaxed text-gray-800 bg-gray-50 p-6 rounded-md max-w-none" dangerouslySetInnerHTML={{ __html: data.preRequisites }} />
             </div>
 
             <div>
               <h2 className="text-2xl font-bold text-primary border-b-2 border-primary pb-2 mb-6">5. Out of Scope</h2>
-              <div className="whitespace-pre-wrap leading-relaxed text-gray-800">
-                {data.outOfScope}
-              </div>
+              <div className="prose leading-relaxed text-gray-800 max-w-none" dangerouslySetInnerHTML={{ __html: data.outOfScope }} />
             </div>
 
             <div>
@@ -221,11 +217,15 @@ export default function ProposalPreview() {
                       <TableCell>{row.totalCost}</TableCell>
                     </TableRow>
                   ))}
+                  <TableRow className="bg-gray-50 font-semibold">
+                    <TableCell colSpan={2} className="text-right">Total</TableCell>
+                    <TableCell data-testid="text-preview-commercial-total">{formatCurrency(data.commercialRows)}</TableCell>
+                  </TableRow>
                 </TableBody>
               </Table>
-              <div className="bg-gray-50 p-4 border rounded text-sm text-gray-700 whitespace-pre-wrap font-sans">
+              <div className="bg-gray-50 p-4 border rounded text-sm text-gray-700 font-sans">
                 <p className="font-semibold mb-2">Notes:</p>
-                {COMMERCIAL_NOTES_TEXT}
+                <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: data.commercialNotes }} />
               </div>
             </div>
           </div>
@@ -251,34 +251,12 @@ export default function ProposalPreview() {
             <h2 className="text-2xl font-bold text-primary border-b-2 border-primary pb-2">9. Acceptance and Authorization</h2>
             
             <p className="text-gray-800 leading-relaxed mb-4">
-              This proposal is accepted and authorized by the respective representatives from both parties.
+              This proposal is accepted and authorized by the respective representative from Orient Technologies.
             </p>
 
-            <div className="grid grid-cols-2 gap-16 font-sans">
+            <div className="grid grid-cols-2 gap-16 font-sans max-w-md">
               <div className="space-y-6">
-                <h3 className="text-xl font-bold text-gray-900 border-b pb-2">For {data.customerName || '[Customer]'}</h3>
-                <div className="space-y-4">
-                  <div className="flex border-b border-gray-200 pb-1">
-                    <span className="w-24 text-gray-500">Name:</span>
-                    <span className="font-semibold">{data.customerAcceptance.name}</span>
-                  </div>
-                  <div className="flex border-b border-gray-200 pb-1">
-                    <span className="w-24 text-gray-500">Designation:</span>
-                    <span className="font-semibold">{data.customerAcceptance.designation}</span>
-                  </div>
-                  <div className="flex border-b border-gray-200 pb-1 h-16 items-end">
-                    <span className="w-24 text-gray-500 mb-1">Signature:</span>
-                    <span className="italic px-2">{data.customerAcceptance.signature}</span>
-                  </div>
-                  <div className="flex border-b border-gray-200 pb-1">
-                    <span className="w-24 text-gray-500">Date:</span>
-                    <span className="font-semibold">{data.customerAcceptance.date}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <h3 className="text-xl font-bold text-gray-900 border-b pb-2">For Orient Technologies</h3>
+                <h3 className="text-xl font-bold text-gray-900 border-b pb-2">Orient Technologies Ltd</h3>
                 <div className="space-y-4">
                   <div className="flex border-b border-gray-200 pb-1">
                     <span className="w-24 text-gray-500">Name:</span>

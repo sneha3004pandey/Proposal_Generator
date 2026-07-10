@@ -108,22 +108,18 @@ export const CreateProposalBody = zod.object({
   "changeNotice": zod.string(),
   "remark": zod.string()
 })),
-  "projectSummary": zod.string(),
-  "scopeOfWork": zod.string(),
-  "outOfScope": zod.string(),
+  "projectSummary": zod.string().describe('Rich HTML content'),
+  "scopeOfWork": zod.string().describe('Rich HTML content'),
+  "preRequisites": zod.string().describe('Rich HTML content'),
+  "outOfScope": zod.string().describe('Rich HTML content'),
   "commercialRows": zod.array(zod.object({
   "description": zod.string(),
   "timeline": zod.string(),
   "totalCost": zod.string()
 })),
-  "corporateProfile": zod.string(),
-  "orientStrengths": zod.string(),
-  "customerAcceptance": zod.object({
-  "name": zod.string(),
-  "designation": zod.string(),
-  "signature": zod.string(),
-  "date": zod.string()
-}),
+  "commercialNotes": zod.string().describe('Rich HTML content'),
+  "corporateProfile": zod.string().describe('Fixed, read-only plain text'),
+  "orientStrengths": zod.string().describe('Fixed, read-only plain text'),
   "orientAcceptance": zod.object({
   "name": zod.string(),
   "designation": zod.string(),
@@ -151,22 +147,18 @@ export const CreateProposalResponse = zod.object({
   "changeNotice": zod.string(),
   "remark": zod.string()
 })),
-  "projectSummary": zod.string(),
-  "scopeOfWork": zod.string(),
-  "outOfScope": zod.string(),
+  "projectSummary": zod.string().describe('Rich HTML content'),
+  "scopeOfWork": zod.string().describe('Rich HTML content'),
+  "preRequisites": zod.string().describe('Rich HTML content'),
+  "outOfScope": zod.string().describe('Rich HTML content'),
   "commercialRows": zod.array(zod.object({
   "description": zod.string(),
   "timeline": zod.string(),
   "totalCost": zod.string()
 })),
-  "corporateProfile": zod.string(),
-  "orientStrengths": zod.string(),
-  "customerAcceptance": zod.object({
-  "name": zod.string(),
-  "designation": zod.string(),
-  "signature": zod.string(),
-  "date": zod.string()
-}),
+  "commercialNotes": zod.string().describe('Rich HTML content'),
+  "corporateProfile": zod.string().describe('Fixed, read-only plain text'),
+  "orientStrengths": zod.string().describe('Fixed, read-only plain text'),
   "orientAcceptance": zod.object({
   "name": zod.string(),
   "designation": zod.string(),
@@ -204,22 +196,18 @@ export const GetProposalResponse = zod.object({
   "changeNotice": zod.string(),
   "remark": zod.string()
 })),
-  "projectSummary": zod.string(),
-  "scopeOfWork": zod.string(),
-  "outOfScope": zod.string(),
+  "projectSummary": zod.string().describe('Rich HTML content'),
+  "scopeOfWork": zod.string().describe('Rich HTML content'),
+  "preRequisites": zod.string().describe('Rich HTML content'),
+  "outOfScope": zod.string().describe('Rich HTML content'),
   "commercialRows": zod.array(zod.object({
   "description": zod.string(),
   "timeline": zod.string(),
   "totalCost": zod.string()
 })),
-  "corporateProfile": zod.string(),
-  "orientStrengths": zod.string(),
-  "customerAcceptance": zod.object({
-  "name": zod.string(),
-  "designation": zod.string(),
-  "signature": zod.string(),
-  "date": zod.string()
-}),
+  "commercialNotes": zod.string().describe('Rich HTML content'),
+  "corporateProfile": zod.string().describe('Fixed, read-only plain text'),
+  "orientStrengths": zod.string().describe('Fixed, read-only plain text'),
   "orientAcceptance": zod.object({
   "name": zod.string(),
   "designation": zod.string(),
@@ -255,22 +243,18 @@ export const UpdateProposalBody = zod.object({
   "changeNotice": zod.string(),
   "remark": zod.string()
 })),
-  "projectSummary": zod.string(),
-  "scopeOfWork": zod.string(),
-  "outOfScope": zod.string(),
+  "projectSummary": zod.string().describe('Rich HTML content'),
+  "scopeOfWork": zod.string().describe('Rich HTML content'),
+  "preRequisites": zod.string().describe('Rich HTML content'),
+  "outOfScope": zod.string().describe('Rich HTML content'),
   "commercialRows": zod.array(zod.object({
   "description": zod.string(),
   "timeline": zod.string(),
   "totalCost": zod.string()
 })),
-  "corporateProfile": zod.string(),
-  "orientStrengths": zod.string(),
-  "customerAcceptance": zod.object({
-  "name": zod.string(),
-  "designation": zod.string(),
-  "signature": zod.string(),
-  "date": zod.string()
-}),
+  "commercialNotes": zod.string().describe('Rich HTML content'),
+  "corporateProfile": zod.string().describe('Fixed, read-only plain text'),
+  "orientStrengths": zod.string().describe('Fixed, read-only plain text'),
   "orientAcceptance": zod.object({
   "name": zod.string(),
   "designation": zod.string(),
@@ -298,22 +282,18 @@ export const UpdateProposalResponse = zod.object({
   "changeNotice": zod.string(),
   "remark": zod.string()
 })),
-  "projectSummary": zod.string(),
-  "scopeOfWork": zod.string(),
-  "outOfScope": zod.string(),
+  "projectSummary": zod.string().describe('Rich HTML content'),
+  "scopeOfWork": zod.string().describe('Rich HTML content'),
+  "preRequisites": zod.string().describe('Rich HTML content'),
+  "outOfScope": zod.string().describe('Rich HTML content'),
   "commercialRows": zod.array(zod.object({
   "description": zod.string(),
   "timeline": zod.string(),
   "totalCost": zod.string()
 })),
-  "corporateProfile": zod.string(),
-  "orientStrengths": zod.string(),
-  "customerAcceptance": zod.object({
-  "name": zod.string(),
-  "designation": zod.string(),
-  "signature": zod.string(),
-  "date": zod.string()
-}),
+  "commercialNotes": zod.string().describe('Rich HTML content'),
+  "corporateProfile": zod.string().describe('Fixed, read-only plain text'),
+  "orientStrengths": zod.string().describe('Fixed, read-only plain text'),
   "orientAcceptance": zod.object({
   "name": zod.string(),
   "designation": zod.string(),

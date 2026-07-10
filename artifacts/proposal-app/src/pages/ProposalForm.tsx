@@ -13,18 +13,23 @@ import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Save, ChevronRight, CheckCircle2, FileText, ArrowLeft, Eye } from 'lucide-react';
 import { 
   DEFAULT_CORPORATE_PROFILE, 
   DEFAULT_ORIENT_STRENGTHS, 
-  PRE_REQUISITES_TEXT,
-  COMMERCIAL_NOTES_TEXT,
+  DEFAULT_PRE_REQUISITES_HTML,
+  DEFAULT_COMMERCIAL_NOTES_HTML,
   CONFIDENTIAL_TEXT_TEMPLATE
 } from '@/constants';
 import { ProposalData } from '@workspace/api-client-react';
+import { RichTextEditor } from '@/components/RichTextEditor';
+
+function stripHtml(html: string): string {
+  if (!html) return '';
+  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+}
 
 const STEPS = [
   { id: 1, label: 'Proposal Details', heading: 'Proposal Details' },
@@ -66,11 +71,12 @@ export default function ProposalForm() {
     versionHistory: [{ version: '1.0', dateReleased: new Date().toISOString().split('T')[0], changeNotice: 'Submitted', remark: 'New Proposal Submission' }],
     projectSummary: '',
     scopeOfWork: '',
+    preRequisites: DEFAULT_PRE_REQUISITES_HTML,
     outOfScope: '',
     commercialRows: [{ description: '', timeline: '', totalCost: '' }],
+    commercialNotes: DEFAULT_COMMERCIAL_NOTES_HTML,
     corporateProfile: DEFAULT_CORPORATE_PROFILE,
     orientStrengths: DEFAULT_ORIENT_STRENGTHS,
-    customerAcceptance: { name: '', designation: '', signature: '', date: '' },
     orientAcceptance: { name: '', designation: '', signature: '', date: '' },
   });
 
@@ -80,8 +86,11 @@ export default function ProposalForm() {
   useEffect(() => {
     if (existingProposal && initializedForId.current !== existingProposal.id) {
       initializedForId.current = existingProposal.id;
-      setFormData(existingProposal.data);
+      // Merge with defaults so proposals saved before newer fields (e.g.
+      // preRequisites, commercialNotes) existed still load correctly.
+      setFormData({ ...getDefaultData(), ...existingProposal.data });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existingProposal]);
 
   const handleSave = async (showToast = true) => {
@@ -290,11 +299,11 @@ export default function ProposalForm() {
         return (
           <div className="space-y-4 max-w-4xl">
             <p className="text-sm text-gray-500">Provide a high-level summary of the project, objectives, and expected outcomes.</p>
-            <Textarea 
-              value={formData.projectSummary} 
-              onChange={e => updateField('projectSummary', e.target.value)}
-              className="min-h-[300px] font-sans"
+            <RichTextEditor
+              value={formData.projectSummary}
+              onChange={html => updateField('projectSummary', html)}
               placeholder="Enter project summary..."
+              minHeight="300px"
             />
           </div>
         );
@@ -302,36 +311,43 @@ export default function ProposalForm() {
         return (
           <div className="space-y-4 max-w-4xl">
             <p className="text-sm text-gray-500">Detail the specific deliverables and scope boundaries for this engagement.</p>
-            <Textarea 
-              value={formData.scopeOfWork} 
-              onChange={e => updateField('scopeOfWork', e.target.value)}
-              className="min-h-[400px] font-sans"
-              placeholder="Enter scope of work... (supports bullet points via text)"
+            <RichTextEditor
+              value={formData.scopeOfWork}
+              onChange={html => updateField('scopeOfWork', html)}
+              placeholder="Enter scope of work..."
+              minHeight="400px"
             />
           </div>
         );
       case 5:
         return (
           <div className="space-y-4 max-w-4xl">
-            <p className="text-sm text-gray-500">The following pre-requisites are standard and will be included in the final document.</p>
-            <div className="bg-gray-50 border border-gray-200 p-6 rounded-md whitespace-pre-wrap font-sans text-sm text-gray-800">
-              {PRE_REQUISITES_TEXT}
-            </div>
+            <p className="text-sm text-gray-500">The following pre-requisites are standard and pre-filled, but you can edit them for this proposal.</p>
+            <RichTextEditor
+              value={formData.preRequisites}
+              onChange={html => updateField('preRequisites', html)}
+              placeholder="Enter pre-requisites..."
+              minHeight="300px"
+            />
           </div>
         );
       case 6:
         return (
           <div className="space-y-4 max-w-4xl">
             <p className="text-sm text-gray-500">List items explicitly excluded from the scope of work.</p>
-            <Textarea 
-              value={formData.outOfScope} 
-              onChange={e => updateField('outOfScope', e.target.value)}
-              className="min-h-[300px] font-sans"
+            <RichTextEditor
+              value={formData.outOfScope}
+              onChange={html => updateField('outOfScope', html)}
               placeholder="Enter out of scope items..."
+              minHeight="300px"
             />
           </div>
         );
-      case 7:
+      case 7: {
+        const total = formData.commercialRows.reduce((sum, row) => {
+          const numeric = parseFloat((row.totalCost || '').replace(/[^0-9.-]/g, ''));
+          return sum + (isNaN(numeric) ? 0 : numeric);
+        }, 0);
         return (
           <div className="space-y-6">
             <Table className="border rounded-md">
@@ -368,67 +384,52 @@ export default function ProposalForm() {
                     </TableCell>
                   </TableRow>
                 ))}
+                <TableRow className="bg-gray-50 font-semibold">
+                  <TableCell colSpan={2} className="text-right">Total</TableCell>
+                  <TableCell data-testid="text-commercial-total">{total.toLocaleString('en-IN')}</TableCell>
+                  <TableCell></TableCell>
+                </TableRow>
               </TableBody>
             </Table>
             <Button variant="outline" size="sm" onClick={() => {
               updateField('commercialRows', [...formData.commercialRows, { description: '', timeline: '', totalCost: '' }]);
             }}>+ Add Commercial Row</Button>
 
-            <div className="mt-8 bg-gray-50 border border-gray-200 text-gray-700 p-4 rounded-md text-sm whitespace-pre-wrap">
-              <h4 className="font-semibold mb-2 text-gray-900">Standard Commercial Notes:</h4>
-              {COMMERCIAL_NOTES_TEXT}
+            <div className="mt-8 space-y-2">
+              <h4 className="font-semibold text-gray-900">Standard Commercial Notes</h4>
+              <p className="text-sm text-gray-500">These notes are standard and pre-filled, but you can edit them for this proposal.</p>
+              <RichTextEditor
+                value={formData.commercialNotes}
+                onChange={html => updateField('commercialNotes', html)}
+                minHeight="200px"
+              />
             </div>
           </div>
         );
+      }
       case 8:
         return (
           <div className="space-y-4 max-w-4xl">
-            <p className="text-sm text-gray-500">Standard corporate profile. You can edit this if needed for this specific proposal.</p>
-            <Textarea 
-              value={formData.corporateProfile} 
-              onChange={e => updateField('corporateProfile', e.target.value)}
-              className="min-h-[500px] font-sans"
-            />
+            <p className="text-sm text-gray-500">Standard corporate profile (fixed, not editable).</p>
+            <div className="bg-gray-50 border border-gray-200 p-6 rounded-md whitespace-pre-wrap font-sans text-sm text-gray-800">
+              {DEFAULT_CORPORATE_PROFILE}
+            </div>
           </div>
         );
       case 9:
         return (
           <div className="space-y-4 max-w-4xl">
-            <p className="text-sm text-gray-500">Standard strengths profile. You can edit this if needed.</p>
-            <Textarea 
-              value={formData.orientStrengths} 
-              onChange={e => updateField('orientStrengths', e.target.value)}
-              className="min-h-[500px] font-sans"
-            />
+            <p className="text-sm text-gray-500">Standard strengths profile (fixed, not editable).</p>
+            <div className="bg-gray-50 border border-gray-200 p-6 rounded-md whitespace-pre-wrap font-sans text-sm text-gray-800">
+              {DEFAULT_ORIENT_STRENGTHS}
+            </div>
           </div>
         );
       case 10:
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          <div className="max-w-md">
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold border-b pb-2">9.1 {formData.customerName || '[Customer Name]'}</h3>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Name</Label>
-                  <Input value={formData.customerAcceptance.name} onChange={e => updateField('customerAcceptance', { ...formData.customerAcceptance, name: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Designation</Label>
-                  <Input value={formData.customerAcceptance.designation} onChange={e => updateField('customerAcceptance', { ...formData.customerAcceptance, designation: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Signature</Label>
-                  <Input value={formData.customerAcceptance.signature} onChange={e => updateField('customerAcceptance', { ...formData.customerAcceptance, signature: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Date</Label>
-                  <Input type="date" value={formData.customerAcceptance.date} onChange={e => updateField('customerAcceptance', { ...formData.customerAcceptance, date: e.target.value })} />
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold border-b pb-2">9.2 Orient Technologies Ltd</h3>
+              <h3 className="text-lg font-semibold border-b pb-2">Orient Technologies Ltd</h3>
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label>Name</Label>
@@ -488,11 +489,19 @@ export default function ProposalForm() {
               <div className="space-y-4">
                 <div>
                   <h4 className="font-medium text-gray-500 mb-1">Project Summary</h4>
-                  <p className="text-gray-900 line-clamp-2">{formData.projectSummary || <span className="text-red-500">Missing</span>}</p>
+                  {stripHtml(formData.projectSummary) ? (
+                    <p className="text-gray-900 line-clamp-2">{stripHtml(formData.projectSummary)}</p>
+                  ) : (
+                    <span className="text-red-500">Missing</span>
+                  )}
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-500 mb-1">Scope of Work</h4>
-                  <p className="text-gray-900 line-clamp-2">{formData.scopeOfWork || <span className="text-red-500">Missing</span>}</p>
+                  {stripHtml(formData.scopeOfWork) ? (
+                    <p className="text-gray-900 line-clamp-2">{stripHtml(formData.scopeOfWork)}</p>
+                  ) : (
+                    <span className="text-red-500">Missing</span>
+                  )}
                 </div>
               </div>
             </div>

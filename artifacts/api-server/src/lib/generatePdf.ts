@@ -1,23 +1,5 @@
 import PDFDocument from "pdfkit";
-
-const PREREQS = [
-  "User Credential with valid accesses & licenses for the developer",
-  "Access to the infra/gateway/environments/templates/apps/reports/active directory",
-  "SharePoint folder structure will be fixed before the start of the project and will be changed only via the backend",
-  "Questionnaire for metadata will be fixed before the start of the project",
-  "Approvers for each folder will be assigned in approver master by admin",
-  "User master & role assignment will be managed by admin",
-  "All users who will access the app will need either Microsoft E1/E3/E5/PowerApps license.",
-  "Customer will provide all the necessary information and allow Orient team to access the system for development & maintenance of the project",
-];
-
-const COMMERCIAL_NOTES = [
-  "Prices mentioned are exclusive of all government taxes.",
-  "Payment terms would be 100% in advance.",
-  "Customer shall release the payment within 30 days of the invoice submission.",
-  'All payments should be released in favor of "Orient Technologies Ltd."',
-  "AMC includes only lights-on services. Any changes or modifications will be made post Customer approval of the change request hours and be billed as per actuals.",
-];
+import { renderHtmlIntoPdf } from "./htmlToPdfKit.js";
 
 const BLUE = "#1e40af";
 const LIGHT_BLUE = "#dbeafe";
@@ -66,19 +48,6 @@ function bodyText(doc: PDFKit.PDFDocument, text: string) {
     .font("Helvetica")
     .text(text, MARGIN, doc.y, { width: CONTENT_W })
     .moveDown(0.5);
-}
-
-function bulletList(doc: PDFKit.PDFDocument, items: string[]) {
-  items.forEach((item) => {
-    addPageIfNeeded(doc, 30);
-    doc
-      .fillColor(DARK)
-      .fontSize(10)
-      .font("Helvetica")
-      .text(`• ${item}`, MARGIN + 10, doc.y, { width: CONTENT_W - 10 })
-      .moveDown(0.3);
-  });
-  doc.moveDown(0.3);
 }
 
 function simpleTable(
@@ -225,29 +194,41 @@ export function generatePdf(data: Record<string, any>): Promise<Buffer> {
 
     // ---- Pages 3-4: Project Summary, Scope ----
     doc.addPage();
+    const htmlOpts = { marginX: MARGIN, contentWidth: CONTENT_W, pageHeight: PAGE_H, marginBottom: MARGIN };
+
     sectionHeading(doc, "2. Project Summary");
-    bodyText(doc, data.projectSummary || "");
+    renderHtmlIntoPdf(doc, data.projectSummary || "", htmlOpts);
 
     addPageIfNeeded(doc, 100);
     sectionHeading(doc, "3. Scope of Work");
-    bodyText(doc, data.scopeOfWork || "");
+    renderHtmlIntoPdf(doc, data.scopeOfWork || "", htmlOpts);
 
     // ---- Page 5: Pre-Reqs, Out of Scope, Commercials ----
     doc.addPage();
     sectionHeading(doc, "4. Pre-Requisites");
-    bulletList(doc, PREREQS);
+    renderHtmlIntoPdf(doc, data.preRequisites || "", htmlOpts);
 
     sectionHeading(doc, "5. Out of Scope");
-    bodyText(doc, data.outOfScope || "");
+    renderHtmlIntoPdf(doc, data.outOfScope || "", htmlOpts);
 
     sectionHeading(doc, "6. Commercials");
     const commRows = (data.commercialRows || []).map(
       (r: Record<string, string>) => [r.description || "", r.timeline || "", r.totalCost || ""],
     );
+    const commercialTotal = (data.commercialRows || []).reduce(
+      (sum: number, r: Record<string, string>) => {
+        const numeric = parseFloat((r.totalCost || "").replace(/[^0-9.-]/g, ""));
+        return sum + (isNaN(numeric) ? 0 : numeric);
+      },
+      0,
+    );
     if (commRows.length > 0) {
-      simpleTable(doc, ["Description", "Timeline", "Total Cost (In INR)"], commRows);
+      simpleTable(doc, ["Description", "Timeline", "Total Cost (In INR)"], [
+        ...commRows,
+        ["", "Total", commercialTotal.toLocaleString("en-IN")],
+      ]);
     }
-    bulletList(doc, COMMERCIAL_NOTES);
+    renderHtmlIntoPdf(doc, data.commercialNotes || "", htmlOpts);
 
     // ---- Page 6: Corporate Profile ----
     doc.addPage();
@@ -263,15 +244,7 @@ export function generatePdf(data: Record<string, any>): Promise<Buffer> {
     doc.addPage();
     sectionHeading(doc, "9. Acceptance and Authorization");
 
-    subHeading(doc, `9.1 ${customerName}`);
-    const cust = data.customerAcceptance || {};
-    simpleTable(
-      doc,
-      ["Name", "Designation", "Signature", "Date"],
-      [[cust.name || "", cust.designation || "", cust.signature || "", cust.date || ""]],
-    );
-
-    subHeading(doc, "9.2 Orient Technologies Ltd");
+    subHeading(doc, "Orient Technologies Ltd");
     const orient = data.orientAcceptance || {};
     simpleTable(
       doc,

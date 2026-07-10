@@ -364,20 +364,29 @@ components:
             $ref: "#/components/schemas/VersionHistoryRow"
         projectSummary:
           type: string
+          description: Rich HTML content
         scopeOfWork:
           type: string
+          description: Rich HTML content
+        preRequisites:
+          type: string
+          description: Rich HTML content
         outOfScope:
           type: string
+          description: Rich HTML content
         commercialRows:
           type: array
           items:
             $ref: "#/components/schemas/CommercialRow"
+        commercialNotes:
+          type: string
+          description: Rich HTML content
         corporateProfile:
           type: string
+          description: Fixed, read-only plain text
         orientStrengths:
           type: string
-        customerAcceptance:
-          $ref: "#/components/schemas/AcceptanceParty"
+          description: Fixed, read-only plain text
         orientAcceptance:
           $ref: "#/components/schemas/AcceptanceParty"
       required:
@@ -387,11 +396,12 @@ components:
         - versionHistory
         - projectSummary
         - scopeOfWork
+        - preRequisites
         - outOfScope
         - commercialRows
+        - commercialNotes
         - corporateProfile
         - orientStrengths
-        - customerAcceptance
         - orientAcceptance
 
     ProposalInput:

@@ -29,3 +29,26 @@ cd artifacts/proposal-app && PORT=22676 BASE_PATH=/ pnpm run dev
 This does not touch app code. Proper artifact registration (so workflows and
 production routing are platform-managed again) is still a good follow-up if
 the user wants deploys/multi-artifact routing to work natively later.
+
+**Proper fix (preferred over the workaround above) — rename-swap re-registration:**
+`createArtifact` refuses an existing slug, but you can get genuine registration
+without losing any code:
+1. Stop any manual workflows for that slug, `mv artifacts/<slug> artifacts/<slug>.orig`.
+2. Call `createArtifact({ artifactType: ..., slug: <slug>, previewPath, title })` —
+   this scaffolds a fresh dir and registers it (real workflow, real routing).
+   Registering just one orphaned artifact this way can cause the platform to
+   auto-detect and register *all other* orphaned `artifact.toml`s in the repo
+   too (observed: creating `proposal-app` also auto-registered a sibling `api`
+   and `design` artifact) — check `listArtifacts()` afterward before doing
+   more manual work.
+3. `diff -rq` the `.orig` backup against the fresh scaffold to find which files
+   actually differ (usually just `App.tsx`/`index.css`/theme — scaffold
+   placeholders); copy the pre-existing files back over the scaffold, keeping
+   only the new `.replit-artifact/` registration.
+4. Delete the `.orig` backup dir (do this only after diffing — the platform
+   may also auto-register the `.orig` copy's toml as a duplicate artifact if
+   it lingers, which then needs its own cleanup).
+5. Remove old manual workflows via `removeWorkflow`, then `WorkflowsRestart`
+   the real managed workflow names. Kill any stray dev processes still
+   holding the old ports first (`fuser -k <port>/tcp`) — orphaned processes
+   from the manual-workflow era don't die on their own and cause EADDRINUSE.

@@ -9,24 +9,9 @@ import {
   HeadingLevel,
   PageBreak,
   AlignmentType,
-  BorderStyle,
   Packer,
 } from "docx";
-
-const PREREQS = `• User Credential with valid accesses & licenses for the developer
-• Access to the infra/gateway/environments/templates/apps/reports/active directory
-• SharePoint folder structure will be fixed before the start of the project and will be changed only via the backend
-• Questionnaire for metadata will be fixed before the start of the project
-• Approvers for each folder will be assigned in approver master by admin
-• User master & role assignment will be managed by admin
-• All users who will access the app will need either Microsoft E1/E3/E5/PowerApps license.
-• Customer will provide all the necessary information and allow Orient team to access the system for development & maintenance of the project`;
-
-const COMMERCIAL_NOTES = `• Prices mentioned are exclusive of all government taxes.
-• Payment terms would be 100% in advance.
-• Customer shall release the payment within 30 days of the invoice submission.
-• All payments should be released in favor of "Orient Technologies Ltd."
-• AMC includes only lights-on services. Any changes or modifications will be made post Customer approval of the change request hours and be billed as per actuals.`;
+import { htmlToDocxBlocks } from "./htmlToDocx.js";
 
 function heading(text: string, level: (typeof HeadingLevel)[keyof typeof HeadingLevel] = HeadingLevel.HEADING_1) {
   return new Paragraph({ text, heading: level });
@@ -105,6 +90,13 @@ export async function generateDocx(data: Record<string, any>): Promise<Buffer> {
       r.totalCost || "",
     ],
   );
+  const commercialTotal = (data.commercialRows || []).reduce(
+    (sum: number, r: Record<string, string>) => {
+      const numeric = parseFloat((r.totalCost || "").replace(/[^0-9.-]/g, ""));
+      return sum + (isNaN(numeric) ? 0 : numeric);
+    },
+    0,
+  );
 
   const acceptancePair = (label: string, party: Record<string, string>) => [
     heading(label, HeadingLevel.HEADING_2),
@@ -113,6 +105,16 @@ export async function generateDocx(data: Record<string, any>): Promise<Buffer> {
       [[party.name || "", party.designation || "", party.signature || "", party.date || ""]],
     ),
   ];
+
+  const totalTableRow = new TableRow({
+    children: [
+      new TableCell({
+        columnSpan: 2,
+        children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: "Total", bold: true })] })],
+      }),
+      tableCell(commercialTotal.toLocaleString("en-IN"), true, "D9E2F3"),
+    ],
+  });
 
   const sections = [
     // Page 1: Title Page
@@ -148,25 +150,36 @@ export async function generateDocx(data: Record<string, any>): Promise<Buffer> {
 
     // Pages 3-4: Project Summary, Scope of Work
     heading("2. Project Summary"),
-    ...multiLinePara(data.projectSummary || ""),
+    ...htmlToDocxBlocks(data.projectSummary || ""),
     para(""),
     heading("3. Scope of Work"),
-    ...multiLinePara(data.scopeOfWork || ""),
+    ...htmlToDocxBlocks(data.scopeOfWork || ""),
     pageBreak(),
 
     // Page 5: Pre-Reqs, Out of Scope, Commercials
     heading("4. Pre-Requisites"),
-    ...multiLinePara(PREREQS),
+    ...htmlToDocxBlocks(data.preRequisites || ""),
     para(""),
     heading("5. Out of Scope"),
-    ...multiLinePara(data.outOfScope || ""),
+    ...htmlToDocxBlocks(data.outOfScope || ""),
     para(""),
     heading("6. Commercials"),
-    commercialRows.length > 0
-      ? simpleTable(["Description", "Timeline", "Total Cost (In INR)"], commercialRows)
-      : para("(No entries)"),
+    (() => {
+      const headerRow = new TableRow({
+        children: ["Description", "Timeline", "Total Cost (In INR)"].map((h) => tableCell(h, true, "D9E2F3")),
+      });
+      const dataRows = commercialRows.map(
+        (row) => new TableRow({ children: row.map((cell) => tableCell(cell)) }),
+      );
+      return commercialRows.length > 0
+        ? new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [headerRow, ...dataRows, totalTableRow],
+          })
+        : para("(No entries)");
+    })(),
     para(""),
-    ...multiLinePara(COMMERCIAL_NOTES),
+    ...htmlToDocxBlocks(data.commercialNotes || ""),
     pageBreak(),
 
     // Page 6: Corporate Profile
@@ -181,9 +194,7 @@ export async function generateDocx(data: Record<string, any>): Promise<Buffer> {
 
     // Page 8: Acceptance
     heading("9. Acceptance and Authorization"),
-    ...acceptancePair(`9.1 ${customerName}`, data.customerAcceptance || {}),
-    para(""),
-    ...acceptancePair("9.2 Orient Technologies Ltd", data.orientAcceptance || {}),
+    ...acceptancePair("Orient Technologies Ltd", data.orientAcceptance || {}),
   ];
 
   const doc = new Document({
