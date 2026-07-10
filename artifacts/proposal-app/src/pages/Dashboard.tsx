@@ -4,16 +4,29 @@ import { Link } from 'wouter';
 import { format } from 'date-fns';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FileText, Plus, Trash2, Edit, Eye } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Layout } from '@/components/Layout';
+
+const BUSINESS_UNITS = [
+  { value: 'cloud-devops', label: 'Cloud & DevOps' },
+  { value: 'dt', label: 'Digital Transformation (DT)' },
+  { value: 'ims', label: 'Infrastructure Managed Services (IMS)' },
+  { value: 'toss', label: 'Toss' },
+  { value: 'cyber-security', label: 'Cyber Security' },
+  { value: 'data-centre', label: 'Data Centre Solutions' },
+  { value: 'euc', label: 'End User Computing' },
+];
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { data: proposals = [], isLoading } = useListProposals();
   const deleteMutation = useDeleteProposal();
   const queryClient = useQueryClient();
+  const [selectedBU, setSelectedBU] = useState<string>('');
 
   const handleDelete = (id: number) => {
     if (window.confirm('Are you sure you want to delete this proposal?')) {
@@ -24,6 +37,9 @@ export default function Dashboard() {
       });
     }
   };
+
+  const isDT = selectedBU === 'dt';
+  const hasSelection = selectedBU !== '';
 
   return (
     <Layout>
@@ -40,17 +56,37 @@ export default function Dashboard() {
                 <div className="bg-primary/10 p-2 rounded-md">
                   <FileText className="w-5 h-5 text-primary" />
                 </div>
-                DT — Digital Transformation
+                New Proposal
               </CardTitle>
               <CardDescription>
-                Create standardized Digital Transformation business proposals
+                Select a business unit to create a proposal
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Link href="/proposals/new" className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Proposal
-              </Link>
+            <CardContent className="space-y-3">
+              <Select value={selectedBU} onValueChange={setSelectedBU}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select business unit…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {BUSINESS_UNITS.map((bu) => (
+                    <SelectItem key={bu.value} value={bu.value}>
+                      {bu.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {isDT ? (
+                <Link href="/proposals/new" className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Proposal
+                </Link>
+              ) : hasSelection ? (
+                <div className="w-full flex flex-col items-center gap-1 px-4 py-2 rounded-md bg-gray-100 border border-gray-200">
+                  <span className="text-sm font-medium text-gray-400">Template coming soon</span>
+                  <span className="text-xs text-gray-400">This business unit is not yet available</span>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         </div>
