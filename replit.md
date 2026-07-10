@@ -4,10 +4,13 @@ Internal tool for Orient Technologies sales teams to create standardized Digital
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
-- `pnpm --filter @workspace/proposal-app run dev` — run the frontend (port assigned by workflow)
+- Run via the `API Server` and `web` Replit workflows (both start automatically). They wrap:
+  - `PORT=8080 pnpm --filter @workspace/api-server run dev` — API server
+  - `PORT=22676 BASE_PATH=/ pnpm --filter @workspace/proposal-app run dev` — frontend
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
+
+Note: this project was imported from GitHub with `artifacts/*/.replit-artifact/artifact.toml` already present, but the artifacts were never registered with the platform (`listArtifacts()` returns empty), so the usual `artifacts/<slug>: <service>` managed workflows don't exist. The `API Server` and `web` workflows above were configured manually as a workaround, reading `PORT`/`BASE_PATH` from each artifact.toml. If you need to add a new artifact later, you'll likely need to go through proper artifact registration first.
 
 ## Stack
 

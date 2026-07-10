@@ -1,0 +1,1 @@
+- [Imported project with unregistered artifacts](unregistered-artifact-workflows.md) — when `.replit-artifact/artifact.toml` exists but `listArtifacts()` is empty, `createArtifact`/`WorkflowsRestart` on the managed name fail; use `configureWorkflow` reading PORT/BASE_PATH from the toml as a workaround.
