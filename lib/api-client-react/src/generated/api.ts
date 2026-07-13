@@ -573,6 +573,77 @@ export const useCreateProposal = <TError = ErrorType<ErrorResponse>,
       return useMutation(getCreateProposalMutationOptions(options));
     }
 
+export const getDuplicateProposalUrl = (id: number,) => {
+
+
+
+
+  return `/api/proposals/${id}/duplicate`
+}
+
+/**
+ * @summary Duplicate a proposal into a new independent copy
+ */
+export const duplicateProposal = async (id: number, options?: RequestInit): Promise<Proposal> => {
+
+  return customFetch<Proposal>(getDuplicateProposalUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getDuplicateProposalMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof duplicateProposal>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof duplicateProposal>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['duplicateProposal'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof duplicateProposal>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  duplicateProposal(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DuplicateProposalMutationResult = NonNullable<Awaited<ReturnType<typeof duplicateProposal>>>
+
+    export type DuplicateProposalMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Duplicate a proposal into a new independent copy
+ */
+export const useDuplicateProposal = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof duplicateProposal>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof duplicateProposal>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDuplicateProposalMutationOptions(options));
+    }
+
 export const getGetProposalUrl = (id: number,) => {
 
 

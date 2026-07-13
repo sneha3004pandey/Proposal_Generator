@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft, Download, FileText, Printer } from 'lucide-react';
 import { CONFIDENTIAL_TEXT_TEMPLATE } from '@/constants';
+import { isSignatureImage } from '@/components/SignatureInput';
 import { format } from 'date-fns';
 
 function formatCurrency(rows: { totalCost: string }[]): string {
@@ -268,7 +269,12 @@ export default function ProposalPreview() {
                   </div>
                   <div className="flex border-b border-gray-200 pb-1 h-16 items-end">
                     <span className="w-24 text-gray-500 mb-1">Signature:</span>
-                    <span className="italic px-2">{data.orientAcceptance.signature}</span>
+                    {isSignatureImage(data.orientAcceptance.signature) ? (
+                      // eslint-disable-next-line jsx-a11y/img-redundant-alt
+                      <img src={data.orientAcceptance.signature} alt="Signature" data-testid="img-preview-signature" className="h-14 object-contain px-2" />
+                    ) : (
+                      <span className="italic px-2">{data.orientAcceptance.signature}</span>
+                    )}
                   </div>
                   <div className="flex border-b border-gray-200 pb-1">
                     <span className="w-24 text-gray-500">Date:</span>

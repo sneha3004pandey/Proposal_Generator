@@ -10,8 +10,92 @@ import {
   PageBreak,
   AlignmentType,
   Packer,
+  ImageRun,
+  Header,
+  HorizontalPositionRelativeFrom,
+  VerticalPositionRelativeFrom,
+  HorizontalPositionAlign,
+  VerticalPositionAlign,
 } from "docx";
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+import path from "path";
 import { htmlToDocxBlocks } from "./htmlToDocx.js";
+
+// Placeholder logo/watermark images. Swapping in the final branding later is
+// a matter of replacing these two files on disk — no code changes needed.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const LOGO_PATH = path.join(__dirname, "../assets/logo-placeholder.png");
+const WATERMARK_PATH = path.join(__dirname, "../assets/watermark-placeholder.png");
+
+function decodeDataUrlImage(src: string): { buffer: Buffer; ext: "png" | "jpg" | "gif" | "bmp" } | null {
+  const m = src.match(/^data:image\/(png|jpeg|jpg|gif|bmp);base64,(.+)$/);
+  if (!m) return null;
+  const mime = m[1] === "jpeg" ? "jpg" : (m[1] as "png" | "jpg" | "gif" | "bmp");
+  return { buffer: Buffer.from(m[2], "base64"), ext: mime };
+}
+
+// Header repeated on every page: logo pinned to the top-right corner and a
+// large, faded watermark image positioned behind the document content.
+function buildPageHeader(): Header {
+  return new Header({
+    children: [
+      new Paragraph({
+        children: [
+          new ImageRun({
+            type: "png",
+            data: readFileSync(WATERMARK_PATH),
+            transformation: { width: 420, height: 280 },
+            floating: {
+              horizontalPosition: {
+                relative: HorizontalPositionRelativeFrom.PAGE,
+                align: HorizontalPositionAlign.CENTER,
+              },
+              verticalPosition: {
+                relative: VerticalPositionRelativeFrom.PAGE,
+                align: VerticalPositionAlign.CENTER,
+              },
+              behindDocument: true,
+              wrap: { type: "none" as any },
+            },
+          }),
+          new ImageRun({
+            type: "png",
+            data: readFileSync(LOGO_PATH),
+            transformation: { width: 70, height: 52 },
+            floating: {
+              horizontalPosition: {
+                relative: HorizontalPositionRelativeFrom.PAGE,
+                align: HorizontalPositionAlign.RIGHT,
+              },
+              verticalPosition: {
+                relative: VerticalPositionRelativeFrom.PAGE,
+                align: VerticalPositionAlign.TOP,
+              },
+              behindDocument: false,
+              wrap: { type: "none" as any },
+            },
+          }),
+        ],
+      }),
+    ],
+  });
+}
+
+function signatureParagraph(src: string): Paragraph | null {
+  const decoded = decodeDataUrlImage(src);
+  if (!decoded) return null;
+  return new Paragraph({
+    children: [
+      new ImageRun({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        type: decoded.ext as any,
+        data: decoded.buffer,
+        transformation: { width: 140, height: 60 },
+      }),
+    ],
+  });
+}
 
 function heading(text: string, level: (typeof HeadingLevel)[keyof typeof HeadingLevel] = HeadingLevel.HEADING_1) {
   return new Paragraph({ text, heading: level });
@@ -98,13 +182,32 @@ export async function generateDocx(data: Record<string, any>): Promise<Buffer> {
     0,
   );
 
-  const acceptancePair = (label: string, party: Record<string, string>) => [
-    heading(label, HeadingLevel.HEADING_2),
-    simpleTable(
-      ["Name", "Designation", "Signature", "Date"],
-      [[party.name || "", party.designation || "", party.signature || "", party.date || ""]],
-    ),
-  ];
+  const acceptancePair = (label: string, party: Record<string, string>) => {
+    const signatureValue = party.signature || "";
+    const signatureImage = signatureParagraph(signatureValue);
+    const signatureCell = signatureImage
+      ? new TableCell({ children: [signatureImage] })
+      : tableCell(signatureValue);
+    return [
+      heading(label, HeadingLevel.HEADING_2),
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+          new TableRow({
+            children: ["Name", "Designation", "Signature", "Date"].map((h) => tableCell(h, true, "D9E2F3")),
+          }),
+          new TableRow({
+            children: [
+              tableCell(party.name || ""),
+              tableCell(party.designation || ""),
+              signatureCell,
+              tableCell(party.date || ""),
+            ],
+          }),
+        ],
+      }),
+    ];
+  };
 
   const totalTableRow = new TableRow({
     children: [
@@ -209,6 +312,9 @@ export async function generateDocx(data: Record<string, any>): Promise<Buffer> {
               left: 1440,
             },
           },
+        },
+        headers: {
+          default: buildPageHeader(),
         },
         children: sections,
       },

@@ -1,12 +1,18 @@
-import { useListProposals, useDeleteProposal, getListProposalsQueryKey } from '@workspace/api-client-react';
+import { useListProposals, useDeleteProposal, useDuplicateProposal, getListProposalsQueryKey } from '@workspace/api-client-react';
 import { useAuth } from '@/context/AuthContext';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { format } from 'date-fns';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, Plus, Trash2, Edit, Eye } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { FileText, Plus, Trash2, Edit, Eye, Download, Copy, ChevronDown } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Layout } from '@/components/Layout';
@@ -25,7 +31,9 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { data: proposals = [], isLoading } = useListProposals();
   const deleteMutation = useDeleteProposal();
+  const duplicateMutation = useDuplicateProposal();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
   const [selectedBU, setSelectedBU] = useState<string>('');
 
   const handleDelete = (id: number) => {
@@ -35,6 +43,33 @@ export default function Dashboard() {
           queryClient.invalidateQueries({ queryKey: getListProposalsQueryKey() });
         }
       });
+    }
+  };
+
+  const handleDuplicate = (id: number) => {
+    duplicateMutation.mutate({ id }, {
+      onSuccess: (duplicate) => {
+        queryClient.invalidateQueries({ queryKey: getListProposalsQueryKey() });
+        navigate(`/proposals/${duplicate.id}/edit`);
+      },
+    });
+  };
+
+  const handleDownload = async (id: number, format: 'docx' | 'pdf', customerName: string) => {
+    try {
+      const response = await fetch(`/api/proposals/${id}/${format}`, { credentials: 'include' });
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Proposal_${customerName || 'Draft'}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(`Failed to download ${format}`, err);
     }
   };
 
@@ -123,16 +158,41 @@ export default function Dashboard() {
                       {format(new Date(proposal.updatedAt), 'MMM d, yyyy h:mm a')}
                     </TableCell>
                     <TableCell className="text-right space-x-2">
-                      <Link href={`/proposals/${proposal.id}/preview`} className="inline-flex p-2 text-gray-500 hover:text-primary rounded-md hover:bg-gray-100">
+                      <Link href={`/proposals/${proposal.id}/preview`} className="inline-flex p-2 text-gray-500 hover:text-primary rounded-md hover:bg-gray-100" title="Preview">
                         <Eye className="w-4 h-4" />
                       </Link>
-                      <Link href={`/proposals/${proposal.id}/edit`} className="inline-flex p-2 text-gray-500 hover:text-primary rounded-md hover:bg-gray-100">
+                      <Link href={`/proposals/${proposal.id}/edit`} className="inline-flex p-2 text-gray-500 hover:text-primary rounded-md hover:bg-gray-100" title="Open/Edit">
                         <Edit className="w-4 h-4" />
                       </Link>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="inline-flex items-center p-2 text-gray-500 hover:text-primary rounded-md hover:bg-gray-100" title="Download">
+                            <Download className="w-4 h-4" />
+                            <ChevronDown className="w-3 h-3 ml-0.5" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleDownload(proposal.id, 'docx', proposal.customerName)}>
+                            Download Word (.docx)
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDownload(proposal.id, 'pdf', proposal.customerName)}>
+                            Download PDF
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <button
+                        onClick={() => handleDuplicate(proposal.id)}
+                        className="inline-flex p-2 text-gray-500 hover:text-primary rounded-md hover:bg-gray-100"
+                        disabled={duplicateMutation.isPending}
+                        title="Duplicate"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
                       <button 
                         onClick={() => handleDelete(proposal.id)}
                         className="inline-flex p-2 text-gray-500 hover:text-destructive rounded-md hover:bg-red-50"
                         disabled={deleteMutation.isPending}
+                        title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

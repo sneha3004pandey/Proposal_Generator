@@ -25,6 +25,19 @@ import {
 } from '@/constants';
 import { ProposalData } from '@workspace/api-client-react';
 import { RichTextEditor } from '@/components/RichTextEditor';
+import { SignatureInput } from '@/components/SignatureInput';
+
+// Computes the next auto-incremented version number (e.g. 1.0 -> 1.1) from
+// the last row in the version history, falling back to "1.0" when empty or
+// unparsable.
+function nextVersion(history: { version: string }[]): string {
+  const last = history[history.length - 1]?.version || '';
+  const match = last.match(/^(\d+)\.(\d+)$/);
+  if (!match) return '1.0';
+  const major = parseInt(match[1], 10);
+  const minor = parseInt(match[2], 10);
+  return `${major}.${minor + 1}`;
+}
 
 function stripHtml(html: string): string {
   if (!html) return '';
@@ -283,7 +296,7 @@ export default function ProposalForm() {
                 </TableBody>
               </Table>
               <Button variant="outline" size="sm" onClick={() => {
-                updateField('versionHistory', [...formData.versionHistory, { version: '', dateReleased: new Date().toISOString().split('T')[0], changeNotice: 'Submitted', remark: 'New Proposal Submission' }]);
+                updateField('versionHistory', [...formData.versionHistory, { version: nextVersion(formData.versionHistory), dateReleased: new Date().toISOString().split('T')[0], changeNotice: 'Submitted', remark: 'New Proposal Submission' }]);
               }}>+ Add Row</Button>
             </div>
 
@@ -441,7 +454,10 @@ export default function ProposalForm() {
                 </div>
                 <div className="space-y-2">
                   <Label>Signature</Label>
-                  <Input value={formData.orientAcceptance.signature} onChange={e => updateField('orientAcceptance', { ...formData.orientAcceptance, signature: e.target.value })} />
+                  <SignatureInput
+                    value={formData.orientAcceptance.signature}
+                    onChange={sig => updateField('orientAcceptance', { ...formData.orientAcceptance, signature: sig })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Date</Label>

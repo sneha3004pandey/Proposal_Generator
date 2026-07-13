@@ -18,13 +18,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { TableGridPicker } from './TableGridPicker';
 
+// Shared font list reused by every rich text editor instance (Project
+// Summary, Scope of Work, Pre-Requisites, Out of Scope) so the toolbar stays
+// consistent across all 4 sections.
 const FONT_OPTIONS = [
   { label: 'Default', value: '' },
   { label: 'Arial', value: 'Arial' },
   { label: 'Times New Roman', value: 'Times New Roman' },
   { label: 'Calibri', value: 'Calibri' },
   { label: 'Georgia', value: 'Georgia' },
+  { label: 'Verdana', value: 'Verdana' },
+  { label: 'Tahoma', value: 'Tahoma' },
+  { label: 'Garamond', value: 'Garamond' },
+  { label: 'Cambria', value: 'Cambria' },
+  { label: 'Courier New', value: 'Courier New' },
+  { label: 'Trebuchet MS', value: 'Trebuchet MS' },
 ];
 
 interface RichTextEditorProps {
@@ -130,17 +141,20 @@ export function RichTextEditor({ value, onChange, placeholder, minHeight = '250p
           </SelectContent>
         </Select>
 
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() =>
-            editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
-          }
-          data-testid="button-rte-table"
-        >
-          <TableIcon className="w-4 h-4" />
-        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button type="button" variant="ghost" size="sm" data-testid="button-rte-table">
+              <TableIcon className="w-4 h-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <TableGridPicker
+              onSelect={(rows, cols) =>
+                editor.chain().focus().insertTable({ rows, cols, withHeaderRow: true }).run()
+              }
+            />
+          </PopoverContent>
+        </Popover>
 
         <Button
           type="button"

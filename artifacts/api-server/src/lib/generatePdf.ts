@@ -1,5 +1,20 @@
 import PDFDocument from "pdfkit";
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+import path from "path";
 import { renderHtmlIntoPdf } from "./htmlToPdfKit.js";
+
+// Placeholder logo/watermark images. Swapping in the final branding later is
+// a matter of replacing these two files on disk — no code changes needed.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const LOGO_PATH = path.join(__dirname, "../assets/logo-placeholder.png");
+const WATERMARK_PATH = path.join(__dirname, "../assets/watermark-placeholder.png");
+
+function decodeDataUrlImage(src: string): Buffer | null {
+  const m = src.match(/^data:image\/(png|jpeg|jpg|gif|bmp);base64,(.+)$/);
+  if (!m) return null;
+  return Buffer.from(m[2], "base64");
+}
 
 const BLUE = "#1e40af";
 const LIGHT_BLUE = "#dbeafe";
@@ -115,18 +130,53 @@ function simpleTable(
   doc.moveDown(0.5);
 }
 
+// Draws the faded watermark (centered, behind content) and the small
+// top-right logo on the current page. Called once per page via the
+// "pageAdded" event (plus once manually for the first page) so every page
+// of the PDF gets the same decoration.
+function drawPageDecoration(doc: PDFKit.PDFDocument) {
+  const savedX = doc.x;
+  const savedY = doc.y;
+
+  const wmWidth = 320;
+  const wmHeight = 213;
+  doc.opacity(0.35).image(
+    WATERMARK_PATH,
+    (PAGE_W - wmWidth) / 2,
+    (PAGE_H - wmHeight) / 2,
+    { width: wmWidth, height: wmHeight },
+  );
+
+  const logoWidth = 60;
+  const logoHeight = 44;
+  doc.opacity(1).image(
+    LOGO_PATH,
+    PAGE_W - MARGIN - logoWidth,
+    24,
+    { width: logoWidth, height: logoHeight },
+  );
+
+  doc.opacity(1);
+  doc.x = savedX;
+  doc.y = savedY;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function generatePdf(data: Record<string, any>): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       size: "A4",
       margins: { top: MARGIN, bottom: MARGIN, left: MARGIN, right: MARGIN },
+      bufferPages: true,
     });
 
     const chunks: Buffer[] = [];
     doc.on("data", (chunk: Buffer) => chunks.push(chunk));
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
+    doc.on("pageAdded", () => drawPageDecoration(doc));
+    // "pageAdded" does not fire for the very first (implicit) page.
+    drawPageDecoration(doc);
 
     const customerName = data.customerName || "Customer";
     const confidentialText = `Orient will take utmost precautions to ensure that sensitive data like business strategies, data, protected website/app locations, access rights, and confidential documents are managed appropriately. No information related to the project will be exposed to competitors or the public without prior consent of ${customerName} and Orient Technologies Ltd. (OTL)`;
@@ -246,11 +296,22 @@ export function generatePdf(data: Record<string, any>): Promise<Buffer> {
 
     subHeading(doc, "Orient Technologies Ltd");
     const orient = data.orientAcceptance || {};
+    const signatureBuffer = decodeDataUrlImage(orient.signature || "");
+    const tableTopY = doc.y;
     simpleTable(
       doc,
       ["Name", "Designation", "Signature", "Date"],
-      [[orient.name || "", orient.designation || "", orient.signature || "", orient.date || ""]],
+      [[orient.name || "", orient.designation || "", signatureBuffer ? "" : orient.signature || "", orient.date || ""]],
     );
+    if (signatureBuffer) {
+      // Overlay the signature image on top of the blank "Signature" cell:
+      // header row (22px) + data row (22px), 3rd of 4 even columns.
+      const colWidth = CONTENT_W / 4;
+      const dataRowY = tableTopY + 22;
+      doc.image(signatureBuffer, MARGIN + colWidth * 2 + 4, dataRowY + 2, {
+        fit: [colWidth - 12, 18],
+      });
+    }
 
     doc.end();
   });

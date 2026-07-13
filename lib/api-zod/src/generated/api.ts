@@ -172,6 +172,55 @@ export const CreateProposalResponse = zod.object({
 
 
 /**
+ * @summary Duplicate a proposal into a new independent copy
+ */
+export const DuplicateProposalParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DuplicateProposalResponse = zod.object({
+  "id": zod.number(),
+  "userId": zod.number(),
+  "businessUnit": zod.string(),
+  "data": zod.object({
+  "proposalTitle": zod.string(),
+  "customerName": zod.string(),
+  "documentProperties": zod.array(zod.object({
+  "action": zod.string(),
+  "name": zod.string(),
+  "date": zod.string()
+})),
+  "versionHistory": zod.array(zod.object({
+  "version": zod.string(),
+  "dateReleased": zod.string(),
+  "changeNotice": zod.string(),
+  "remark": zod.string()
+})),
+  "projectSummary": zod.string().describe('Rich HTML content'),
+  "scopeOfWork": zod.string().describe('Rich HTML content'),
+  "preRequisites": zod.string().describe('Rich HTML content'),
+  "outOfScope": zod.string().describe('Rich HTML content'),
+  "commercialRows": zod.array(zod.object({
+  "description": zod.string(),
+  "timeline": zod.string(),
+  "totalCost": zod.string()
+})),
+  "commercialNotes": zod.string().describe('Rich HTML content'),
+  "corporateProfile": zod.string().describe('Fixed, read-only plain text'),
+  "orientStrengths": zod.string().describe('Fixed, read-only plain text'),
+  "orientAcceptance": zod.object({
+  "name": zod.string(),
+  "designation": zod.string(),
+  "signature": zod.string(),
+  "date": zod.string()
+})
+}),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
  * @summary Get a proposal by ID
  */
 export const GetProposalParams = zod.object({
